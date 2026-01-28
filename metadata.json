@@ -1,0 +1,7 @@
+{
+  "name": "DadoAI Studio",
+  "description": "An AI-powered manga creation studio that helps you generate characters, storyboards, and high-quality manga panels using Gemini.",
+  "requestFramePermissions": [
+    "camera"
+  ]
+}
