@@ -8,13 +8,6 @@ export enum MangaStyle {
   DARK_FANTASY = 'Dark Fantasy'
 }
 
-export enum Language {
-  ITALIAN = 'Italiano',
-  ENGLISH = 'English',
-  FRENCH = 'Français',
-  SPANISH = 'Español'
-}
-
 export enum MangaGenre {
   ACTION = 'Action',
   ADVENTURE = 'Adventure',
@@ -97,5 +90,4 @@ export interface User {
   email: string;
   avatar: string;
   tier: 'Free' | 'Pro' | 'Enterprise';
-  language: Language;
 }

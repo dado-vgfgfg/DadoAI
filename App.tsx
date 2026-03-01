@@ -5,8 +5,7 @@ import Dashboard from './components/Dashboard';
 import ProjectWizard from './components/ProjectWizard';
 import Sidebar from './components/Sidebar';
 import GenerationUI from './components/GenerationUI';
-// Fix: Added Language to imports
-import { Project, CharacterProfile, MangaPanel, User, CharacterCategory, MangaStyle, Language } from './types';
+import { Project, CharacterProfile, MangaPanel, User, MangaStyle } from './types';
 
 const App: React.FC = () => {
   const [user, setUser] = useState<User | null>(null);
@@ -22,20 +21,25 @@ const App: React.FC = () => {
   }, []);
 
   useEffect(() => {
-    localStorage.setItem('mangai_projects', JSON.stringify(projects));
+    if (projects.length > 0) {
+      localStorage.setItem('mangai_projects', JSON.stringify(projects));
+    }
   }, [projects]);
 
   const handleLogin = () => {
-    // Fix: Added missing 'language' property to satisfy User interface requirements
     const mockUser: User = { 
-      name: "Mangaka Guest", 
-      email: "guest@mangai.com", 
+      name: "Mangaka", 
+      email: "user@dadoaimanga.com", 
       avatar: "https://i.pravatar.cc/150",
-      tier: 'Free',
-      language: Language.ENGLISH
+      tier: 'Pro'
     };
     setUser(mockUser);
     localStorage.setItem('mangai_user', JSON.stringify(mockUser));
+  };
+
+  const handleLogout = () => {
+    setUser(null);
+    localStorage.removeItem('mangai_user');
   };
 
   const handleCreateProject = (projectData: Partial<Project>) => {

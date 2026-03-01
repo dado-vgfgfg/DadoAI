@@ -2,7 +2,22 @@
 import { GoogleGenAI, Type } from "@google/genai";
 import { MangaStyle, MangaGenre, CharacterProfile, CharacterCategory, MangaPanel } from "../types";
 
-const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+const getAI = () => {
+  const apiKey = process.env.API_KEY;
+  if (!apiKey) {
+    throw new Error("API_KEY not configured.");
+  }
+  return new GoogleGenAI({ apiKey });
+};
+
+const handleApiError = (error: any) => {
+  if (error?.message?.includes("Requested entity was not found.")) {
+    const aistudio = (window as any).aistudio;
+    if (aistudio && typeof aistudio.openSelectKey === 'function') {
+      aistudio.openSelectKey();
+    }
+  }
+};
 
 export const generateMangaImage = async (
   prompt: string, 
@@ -11,80 +26,67 @@ export const generateMangaImage = async (
   storyLine: string,
   characters: CharacterProfile[],
   panelsHistory: MangaPanel[],
-  aspectRatio: "1:1" | "3:4" | "4:3" | "16:9" | "9:16" = "3:4"
+  aspectRatio: "1:1" | "3:4" | "4:3" | "16:9" | "9:16" = "3:4",
+  useHighRes: boolean = false
 ): Promise<string | null> => {
   try {
+    const ai = getAI();
     const charContext = characters.map(c => 
-      `${c.name}: ${c.appearance.base}, ${c.appearance.hair} hair, ${c.appearance.eyes} eyes, ${c.appearance.outfit}.`
+      `${c.name} (${c.role}): ${c.appearance.base}, ${c.appearance.hair} hair, ${c.appearance.eyes} eyes, ${c.appearance.outfit}.`
     ).join(" ");
 
-    const lastPanelDesc = panelsHistory.length > 0 
-      ? `LAST ACTION RECORDED: ${panelsHistory[0].prompt}.` 
-      : "BEGINNING OF THE CHAPTER.";
-
-    const genreContext = genres.join(", ");
+    const lastAction = panelsHistory.length > 0 ? panelsHistory[0].prompt : "New Chapter Start.";
 
     const fullPrompt = `
-      TASK: Professional MANGA PRODUCTION with STRICT SEQUENTIAL PACING.
-      STYLE: ${style}. 
-      GENRES: ${genreContext}.
-      STORY SETTING: ${storyLine}.
+      TASK: PROFESSIONAL MANGA PRODUCTION.
+      CORE NARRATIVE LOGIC (STORY): ${storyLine}
+      
+      ART STYLE: ${style}. 
+      GENRES: ${genres.join(", ")}.
       CAST: ${charContext}.
+      CHRONOLOGY: Previous action was "${lastAction}".
+      NEW SCENE REQUEST: ${prompt}.
       
-      CONTEXTUAL FLOW:
-      ${lastPanelDesc}
-      
-      REQUESTED ACTION: ${prompt}.
-      
-      CRITICAL PACING RULES:
-      - NO TIME SKIPS. If the character is in bed and the user says "go to school", you MUST render the character sitting up or getting out of bed. 
-      - RENDERING GRANULARITY: Each page must show the tiny, mundane moments that lead to the next event. 
-      - FOCUS: Show a hand on a doorknob, steam rising from coffee, the character's eyes narrowing as they think.
-      - DO NOT teleport characters. Show the transition between locations or states.
-      
-      VISUAL STYLE:
-      - Cinematic "G-pen" inking, authentic screentones.
-      - Dynamic angles (Dutch angle, bird's eye view).
-      - Relevant SFX onomatopoeia integrated into the art.
+      TECHNICAL REQUIREMENTS:
+      - Authenticity: Professional G-pen lineart, manual screentones, cinematic depth of field.
+      - Pacing: Granular focus. No time jumps. Maintain character outfits and features exactly.
+      - Quality: Masterpiece level composition. High-octane manga energy.
     `;
 
+    const modelName = useHighRes ? 'gemini-3-pro-image-preview' : 'gemini-2.5-flash-image';
+
     const response = await ai.models.generateContent({
-      model: 'gemini-2.5-flash-image',
-      contents: {
-        parts: [{ text: fullPrompt }],
-      },
+      model: modelName,
+      contents: { parts: [{ text: fullPrompt }] },
       config: {
         imageConfig: {
           aspectRatio: aspectRatio,
+          ...(useHighRes ? { imageSize: "2K" } : {})
         }
       },
     });
 
+    if (!response.candidates?.[0]?.content?.parts) return null;
     for (const part of response.candidates[0].content.parts) {
-      if (part.inlineData) {
-        return `data:image/png;base64,${part.inlineData.data}`;
-      }
+      if (part.inlineData) return `data:image/png;base64,${part.inlineData.data}`;
     }
     return null;
-  } catch (error) {
-    console.error("Error generating anime panel:", error);
+  } catch (error: any) {
+    handleApiError(error);
+    console.error("Image generation error:", error);
     return null;
   }
 };
 
 export const generateCharacterPortrait = async (char: Partial<CharacterProfile>, style: MangaStyle): Promise<string | null> => {
   try {
+    const ai = getAI();
     const appearanceStr = char.appearance 
-      ? `${char.appearance.base}, ${char.appearance.hair} hair, ${char.appearance.eyes} eyes, wearing ${char.appearance.outfit}. ${char.appearance.accessories}` 
+      ? `${char.appearance.base}, ${char.appearance.hair} hair, ${char.appearance.eyes} eyes, wearing ${char.appearance.outfit}.` 
       : 'Standard appearance';
 
-    const prompt = `Professional Anime character concept art for ${char.name}. 
-    Category: ${char.category}. Role: ${char.role}. 
-    Physical details: ${appearanceStr}. 
-    Style: ${style}. 
-    ART DIRECTION:
-    - Dynamic pose, high-quality cel-shading, character design sheet style.
-    - Professional manga cover quality.`;
+    const prompt = `Professional Anime character sheet for ${char.name}. Style: ${style}. Appearance: ${appearanceStr}. 
+    Clean lineart, cel-shading, white background. Full consistency focus.`;
 
     const response = await ai.models.generateContent({
       model: 'gemini-2.5-flash-image',
@@ -96,25 +98,24 @@ export const generateCharacterPortrait = async (char: Partial<CharacterProfile>,
       if (part.inlineData) return `data:image/png;base64,${part.inlineData.data}`;
     }
     return null;
-  } catch (error) {
+  } catch (error: any) {
+    handleApiError(error);
     return null;
   }
 };
 
 export const generateCharacterDetails = async (name: string, category: CharacterCategory, plot: string): Promise<Partial<CharacterProfile>> => {
   try {
+    const ai = getAI();
     const response = await ai.models.generateContent({
       model: "gemini-3-flash-preview",
-      contents: `Design a unique anime character for a story with this plot: "${plot}".
-      Name: ${name}
-      Allegiance Category: ${category}
-      Provide role, physical appearance, and personality in JSON format.`,
+      contents: `Design character details for "${name}" (Role: ${category}) in the story context: "${plot}". Return JSON.`,
       config: {
         responseMimeType: "application/json",
         responseSchema: {
           type: Type.OBJECT,
           properties: {
-            role: { type: Type.STRING, description: "Job/Function in the story, e.g. Ronin, Hacker" },
+            role: { type: Type.STRING },
             appearance: { 
               type: Type.OBJECT,
               properties: {
@@ -133,25 +134,22 @@ export const generateCharacterDetails = async (name: string, category: Character
       }
     });
     return JSON.parse(response.text);
-  } catch (error) {
-    return { 
-      role: 'Protagonist', 
-      appearance: { 
-        base: 'Modern Anime Look', hair: 'Spiky', eyes: 'Determined', outfit: 'Heroic', accessories: 'None' 
-      }, 
-      personality: 'Determined' 
-    };
+  } catch (error: any) {
+    handleApiError(error);
+    return { role: 'Protagonist', appearance: { base: 'Modern', hair: 'Dark', eyes: 'Sharp', outfit: 'Casual', accessories: 'None' }, personality: 'Brave' };
   }
 };
 
 export const refinePrompt = async (userInput: string, genres: MangaGenre[]): Promise<string> => {
   try {
+    const ai = getAI();
     const response = await ai.models.generateContent({
       model: "gemini-3-flash-preview",
-      contents: `Enhance this manga scene for SLOW PACING and MICRO-ACTIONS: "${userInput}". Genres: ${genres.join(', ')}. Focus on sensory details and transitional movements. Keep it very short.`,
+      contents: `Transform this into a detailed professional manga panel prompt: "${userInput}". Genres: ${genres.join(', ')}. Focus on cinematic camera angles and micro-expressions.`,
     });
     return response.text || userInput;
-  } catch (error) {
+  } catch (error: any) {
+    handleApiError(error);
     return userInput;
   }
 };
