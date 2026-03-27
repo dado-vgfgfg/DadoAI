@@ -1,93 +1,76 @@
+export type PlanTier = 'Free' | 'Pro';
 
-export enum MangaStyle {
-  MODERN_ANIME = 'Modern Anime (Ufotable Style)',
-  CLASSIC_BW = 'Classic Black & White',
-  VIBRANT_WEBTOON = 'Vibrant Webtoon',
-  RETRO_90S = '90s Retro Anime',
-  CYBERPUNK_NEON = 'Cyberpunk Neon',
-  DARK_FANTASY = 'Dark Fantasy'
+export interface HardwareProfile {
+  cpu: string;
+  gpu: string;
+  ramGb: number;
+  storage: string;
+  network: string;
+  class: 'Low' | 'Mid' | 'High';
 }
 
-export enum MangaGenre {
-  ACTION = 'Action',
-  ADVENTURE = 'Adventure',
-  COMEDY = 'Comedy',
-  DRAMA = 'Drama',
-  FANTASY = 'Fantasy',
-  HORROR = 'Horror',
-  MYSTERY = 'Mystery',
-  PSYCHOLOGICAL = 'Psychological',
-  ROMANCE = 'Romance',
-  SCI_FI = 'Sci-Fi',
-  SLICE_OF_LIFE = 'Slice of Life',
-  SPORTS = 'Sports',
-  SUPERNATURAL = 'Supernatural',
-  THRILLER = 'Thriller',
-  ISEKAI = 'Isekai',
-  CYBERPUNK = 'Cyberpunk',
-  MECHA = 'Mecha',
-  HISTORICAL = 'Historical',
-  MARTIAL_ARTS = 'Martial Arts',
-  MUSIC = 'Music',
-  SCHOOL = 'School',
-  SPACE = 'Space',
-  MILITARY = 'Military',
-  VAMPIRE = 'Vampire',
-  DEMONS = 'Demons',
-  GAME = 'Game',
-  POLICE = 'Police',
-  MAGICAL_GIRL = 'Magical Girl',
-  PARODY = 'Parody',
-  HAREM = 'Harem',
-  JOSEI = 'Josei',
-  SEINEN = 'Seinen',
-  SHOUJO = 'Shoujo',
-  SHOUNEN = 'Shounen'
+export interface TelemetrySnapshot {
+  timestamp: number;
+  cpuUsage: number;
+  gpuUsage: number;
+  ramUsage: number;
+  cpuTemp: number;
+  gpuTemp: number;
+  vramUsage: number;
+  fps: number;
+  ping: number;
+  frameTime: number;
 }
 
-export enum CharacterCategory {
-  MAIN = 'Protagonist',
-  SECONDARY = 'Supporting',
-  VILLAIN = 'Antagonist'
+export interface PerformanceProfile {
+  id: string;
+  gameTitle: string;
+  executable: string;
+  boostLevel: 'Balanced' | 'Competitive' | 'Ultra';
+  networkMode: 'Standard' | 'LowLatency';
+  inputLagReduction: boolean;
+  autoBoostOnLaunch: boolean;
+  cpuAffinityMask?: string;
+  powerPlan: 'Balanced' | 'HighPerformance' | 'Ultimate';
 }
 
-export interface CharacterProfile {
+export interface OptimizationModule {
   id: string;
   name: string;
-  role: string;
-  category: CharacterCategory;
-  personality: string;
-  appearance: {
-    base: string;
-    hair: string;
-    eyes: string;
-    outfit: string;
-    accessories: string;
-  };
-  portraitUrl?: string;
+  description: string;
+  enabled: boolean;
+  premium: boolean;
+  category: 'Boost' | 'Network' | 'Input' | 'Cleanup' | 'AI' | 'Overlay' | 'Safety';
 }
 
-export interface MangaPanel {
-  id: string;
-  imageUrl: string;
-  prompt: string;
-  timestamp: number;
+export interface OperationResult {
+  operation: string;
+  status: 'success' | 'warning' | 'failed';
+  message: string;
+  rollbackHint?: string;
 }
 
-export interface Project {
+export interface AiRecommendation {
   id: string;
   title: string;
-  genres: MangaGenre[];
-  style: MangaStyle;
-  storyLine: string;
-  characters: CharacterProfile[];
-  panels: MangaPanel[];
-  createdAt: number;
+  impact: 'Low' | 'Medium' | 'High';
+  confidence: number;
+  requiresPro: boolean;
+  detail: string;
 }
 
-export interface User {
-  name: string;
-  email: string;
-  avatar: string;
-  tier: 'Free' | 'Pro' | 'Enterprise';
+export interface BenchmarkResult {
+  id: string;
+  gameTitle: string;
+  date: string;
+  avgFps: number;
+  p1LowFps: number;
+  avgPing: number;
+  notes: string;
+}
+
+export interface SafetyState {
+  safeMode: boolean;
+  lastBackup: string;
+  restorePointName: string;
 }
