@@ -1,123 +1,103 @@
+import React, { useMemo, useState } from 'react';
+import { PlanTier, PerformanceProfile, SafetyState } from './types';
+import { aiRecommendations, benchmarkHistory, defaultSafetyState, hardwareProfile, optimizationModules, profiles } from './src/data/mockData';
+import SidebarNav from './src/components/SidebarNav';
+import MetricCard from './src/components/MetricCard';
+import ModuleGrid from './src/components/ModuleGrid';
+import ProfileTable from './src/components/ProfileTable';
+import AiCoachPanel from './src/components/AiCoachPanel';
+import HistoryPanel from './src/components/HistoryPanel';
+import { useRealtimeMetrics } from './src/hooks/useRealtimeMetrics';
+import { systemBridge } from './src/services/systemBridge';
+import './src/styles/neon.css';
 
-import React, { useState, useEffect } from 'react';
-import Login from './components/Login';
-import Dashboard from './components/Dashboard';
-import ProjectWizard from './components/ProjectWizard';
-import Sidebar from './components/Sidebar';
-import GenerationUI from './components/GenerationUI';
-import { Project, CharacterProfile, MangaPanel, User, MangaStyle } from './types';
+const navItems = ['Dashboard', 'Profiles', 'Overlay', 'AI Coach', 'History', 'Safety'];
 
 const App: React.FC = () => {
-  const [user, setUser] = useState<User | null>(null);
-  const [projects, setProjects] = useState<Project[]>([]);
-  const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null);
-  const [isCreating, setIsCreating] = useState(false);
+  const [active, setActive] = useState<string>('Dashboard');
+  const [tier, setTier] = useState<PlanTier>('Pro');
+  const [status, setStatus] = useState<string>('Ready for optimization.');
+  const [safety, setSafety] = useState<SafetyState>(defaultSafetyState);
+  const { current, quickStats } = useRealtimeMetrics();
 
-  useEffect(() => {
-    const savedUser = localStorage.getItem('mangai_user');
-    const savedProjects = localStorage.getItem('mangai_projects');
-    if (savedUser) setUser(JSON.parse(savedUser));
-    if (savedProjects) setProjects(JSON.parse(savedProjects));
-  }, []);
+  const planSummary = useMemo(
+    () => ({
+      free: ['Basic One-Click Boost', 'Real-time Monitoring', 'Temp File Cleanup', 'Startup App Manager', 'FPS Estimation'],
+      pro: ['Advanced CPU/GPU Tweaks', 'Low Latency Network Stack', 'In-game Overlay', 'AI Assistant', 'Benchmark History'],
+    }),
+    [],
+  );
 
-  useEffect(() => {
-    if (projects.length > 0) {
-      localStorage.setItem('mangai_projects', JSON.stringify(projects));
-    }
-  }, [projects]);
-
-  const handleLogin = () => {
-    const mockUser: User = { 
-      name: "Mangaka", 
-      email: "user@dadoaimanga.com", 
-      avatar: "https://i.pravatar.cc/150",
-      tier: 'Pro'
-    };
-    setUser(mockUser);
-    localStorage.setItem('mangai_user', JSON.stringify(mockUser));
+  const handleBoost = async (profile: PerformanceProfile) => {
+    const results = await systemBridge.applyOneClickBoost(profile);
+    const last = results[results.length - 1];
+    setStatus(`${profile.gameTitle} optimized. ${last.message}`);
   };
 
-  const handleLogout = () => {
-    setUser(null);
-    localStorage.removeItem('mangai_user');
+  const handleSafeMode = async () => {
+    const next = await systemBridge.toggleSafeMode(safety);
+    setSafety(next);
+    setStatus(`Safe mode ${next.safeMode ? 'enabled' : 'disabled'}. Backup synced at ${new Date(next.lastBackup).toLocaleTimeString()}.`);
   };
-
-  const handleCreateProject = (projectData: Partial<Project>) => {
-    const newProject: Project = {
-      id: Math.random().toString(36).substr(2, 9),
-      title: projectData.title || "Untitled Story",
-      genres: projectData.genres || [],
-      style: projectData.style || MangaStyle.MODERN_ANIME,
-      storyLine: projectData.storyLine || "",
-      characters: [],
-      panels: [],
-      createdAt: Date.now(),
-    };
-    setProjects(prev => [newProject, ...prev]);
-    setSelectedProjectId(newProject.id);
-    setIsCreating(false);
-  };
-
-  const handleUpdateProject = (projectId: string, updates: Partial<Project>) => {
-    setProjects(prev => prev.map(p => p.id === projectId ? { ...p, ...updates } : p));
-  };
-
-  const handleAddCharacter = (projectId: string, newChar: CharacterProfile) => {
-    setProjects(prev => prev.map(p => 
-      p.id === projectId ? { ...p, characters: [...p.characters, newChar] } : p
-    ));
-  };
-
-  const handleDeleteCharacter = (projectId: string, charId: string) => {
-    setProjects(prev => prev.map(p => 
-      p.id === projectId ? { ...p, characters: p.characters.filter(c => c.id !== charId) } : p
-    ));
-  };
-
-  const handlePanelGenerated = (projectId: string, panel: MangaPanel) => {
-    setProjects(prev => prev.map(p => 
-      p.id === projectId ? { ...p, panels: [panel, ...p.panels] } : p
-    ));
-  };
-
-  const currentProject = projects.find(p => p.id === selectedProjectId);
-
-  if (!user) return <Login onLogin={handleLogin} />;
-
-  if (selectedProjectId && currentProject) {
-    return (
-      <div className="flex h-screen w-full text-zinc-100 font-sans antialiased overflow-hidden">
-        <Sidebar 
-          project={currentProject}
-          onUpdateProject={(updates) => handleUpdateProject(currentProject.id, updates)}
-          onAddCharacter={(char) => handleAddCharacter(currentProject.id, char)}
-          onDeleteCharacter={(id) => handleDeleteCharacter(currentProject.id, id)}
-          onExit={() => setSelectedProjectId(null)}
-        />
-        <main className="flex-1 flex flex-col relative overflow-hidden">
-          <GenerationUI 
-            project={currentProject}
-            onPanelGenerated={(panel) => handlePanelGenerated(currentProject.id, panel)}
-          />
-        </main>
-      </div>
-    );
-  }
 
   return (
-    <>
-      <Dashboard 
-        projects={projects} 
-        onSelectProject={(p) => setSelectedProjectId(p.id)} 
-        onCreateNew={() => setIsCreating(true)} 
-      />
-      {isCreating && (
-        <ProjectWizard 
-          onComplete={handleCreateProject} 
-          onCancel={() => setIsCreating(false)} 
-        />
-      )}
-    </>
+    <div className="ngu-shell">
+      <SidebarNav items={navItems} active={active} onSelect={setActive} />
+      <main className="ngu-main">
+        <header className="ngu-topbar">
+          <div>
+            <h1>NEON GAMER ULTRA</h1>
+            <p>Commercial-grade gaming optimization hub with safety-first automation.</p>
+          </div>
+          <div className="ngu-actions">
+            <button className="ngu-btn secondary" onClick={() => setTier((t) => (t === 'Free' ? 'Pro' : 'Free'))}>
+              Plan: {tier}
+            </button>
+            <button className="ngu-btn" onClick={() => handleBoost(profiles[0])}>ONE CLICK BOOST</button>
+          </div>
+        </header>
+
+        <section className="ngu-stats-row">
+          {quickStats.map((stat) => (
+            <MetricCard key={stat.label} label={stat.label} value={stat.value} accent={stat.tone as 'cyan' | 'purple' | 'green' | 'orange'} />
+          ))}
+          <MetricCard label="CPU Temp" value={`${Math.round(current.cpuTemp)}°C`} accent="orange" sub="Temperature-aware throttle control" />
+          <MetricCard label="Frame Time" value={`${current.frameTime.toFixed(1)} ms`} accent="cyan" sub="Overlay export ready" />
+        </section>
+
+        <section className="ngu-panel">
+          <header className="ngu-panel-header">
+            <h2>System Intelligence</h2>
+            <p>
+              Auto-detected profile: <strong>{hardwareProfile.class}</strong> tier ({hardwareProfile.cpu} / {hardwareProfile.gpu} / {hardwareProfile.ramGb}GB RAM).
+            </p>
+          </header>
+          <div className="ngu-pill-list">
+            {planSummary.free.map((item) => <span key={item} className="tag enabled">Free: {item}</span>)}
+            {planSummary.pro.map((item) => <span key={item} className="tag">Pro: {item}</span>)}
+          </div>
+        </section>
+
+        <ModuleGrid modules={optimizationModules} tier={tier} />
+        <ProfileTable profiles={profiles} onBoost={handleBoost} />
+        <AiCoachPanel recommendations={aiRecommendations} tier={tier} />
+        <HistoryPanel benchmarks={benchmarkHistory} />
+
+        <section className="ngu-panel safety-panel">
+          <header className="ngu-panel-header">
+            <h2>Safety System</h2>
+            <p>All tweaks are reversible, with automatic backups before modification.</p>
+          </header>
+          <div className="ngu-safety-controls">
+            <p><strong>Safe Mode:</strong> {safety.safeMode ? 'Enabled' : 'Disabled'}</p>
+            <p><strong>Restore Point:</strong> {safety.restorePointName}</p>
+            <button className="ngu-btn secondary" onClick={handleSafeMode}>Toggle Safe Mode</button>
+          </div>
+        </section>
+
+        <footer className="ngu-status">Status: {status}</footer>
+      </main>
+    </div>
   );
 };
 

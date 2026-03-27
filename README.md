@@ -1,20 +1,55 @@
-<div align="center">
-<img width="1200" height="475" alt="GHBanner" src="https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6" />
-</div>
+# NEON GAMER ULTRA
 
-# Run and deploy your AI Studio app
+NEON GAMER ULTRA is a futuristic Windows gaming optimization hub UX prototype, built with React + TypeScript and designed for Electron/Tauri desktop packaging.
 
-This contains everything you need to run your app locally.
+## Highlights
 
-View your app in AI Studio: https://ai.studio/apps/drive/11za1sEGvIrz2bi4Hqc4geNmAT9PApQ2S
+- One-click optimization workflow with safety-aware rollback messaging.
+- Game-specific profiles (boost strategy, power plan, network mode, and launch automation).
+- Real-time telemetry dashboard (CPU/GPU/RAM/FPS/Ping/Frame-time).
+- AI performance assistant cards with confidence and impact scoring.
+- Modular architecture (`components`, `hooks`, `services`, `data`) ready for native Windows integration.
+- Free vs Pro feature separation for commercial monetization.
 
-## Run Locally
+## Tech Stack
 
-**Prerequisites:**  Node.js
+- React 19 + TypeScript
+- Vite 6
+- CSS-based neon/glassmorphism design system
+- Native bridge abstraction (`SystemBridge`) for future Windows API integrations
 
+## Project Structure
 
-1. Install dependencies:
-   `npm install`
-2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
-3. Run the app:
-   `npm run dev`
+```txt
+.
+├── App.tsx
+├── types.ts
+├── src
+│   ├── components/
+│   ├── data/
+│   ├── hooks/
+│   ├── services/
+│   └── styles/
+```
+
+## Development
+
+```bash
+npm install
+npm run dev
+```
+
+## Build
+
+```bash
+npm run build
+```
+
+## Production Integration Notes
+
+To reach full commercial parity with tools like MSI Afterburner / Razer Cortex, connect `src/services/systemBridge.ts` to:
+
+- Signed native modules (Rust/C++/C#) for performance and safety-critical operations.
+- Elevated permission workflows with explicit consent screens.
+- Driver-level telemetry providers for accurate hardware stats.
+- Reversible tweak registry and restore-point orchestration.
