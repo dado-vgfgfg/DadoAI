@@ -1,20 +1,36 @@
-<div align="center">
-<img width="1200" height="475" alt="GHBanner" src="https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6" />
-</div>
+# F-Web Studio
 
-# Run and deploy your AI Studio app
+F-Web Studio is an Electron desktop app for Windows-oriented local workflows.
 
-This contains everything you need to run your app locally.
+## What it includes
 
-View your app in AI Studio: https://ai.studio/apps/drive/11za1sEGvIrz2bi4Hqc4geNmAT9PApQ2S
+- Loyalty card builder (reward points, QR join links, wallet preview, mini-page export)
+- Invitation mini-page builder (templates, countdown, map link, WhatsApp RSVP, QR invite)
+- QR menu builder (categories, allergens, table QR generation, HTML export)
+- Project save system backed by local SQLite
+- Drag/drop-ready canvas editor based on Fabric.js
+- HTML / PDF export options with local file save dialogs
 
-## Run Locally
+## Stack
 
-**Prerequisites:**  Node.js
+- Electron + React + Vite
+- Tailwind CSS
+- SQLite (`better-sqlite3`)
+- Fabric.js
+- QRCode generator (`qrcode`)
+- PDF generation (`pdf-lib`)
 
+## Run
 
-1. Install dependencies:
-   `npm install`
-2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
-3. Run the app:
-   `npm run dev`
+```bash
+npm install
+npm run dev
+```
+
+## Windows production build (.exe)
+
+```bash
+npm run build:win
+```
+
+The installer is generated in `release/`.
