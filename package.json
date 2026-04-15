@@ -1,23 +1,56 @@
 {
-  "name": "dadoai-studio",
+  "name": "f-web-studio",
   "private": true,
-  "version": "0.0.0",
+  "version": "1.0.0",
+  "description": "F-Web Studio desktop builder for loyalty cards, invitations, and QR menus.",
+  "main": "electron/main.mjs",
   "type": "module",
   "scripts": {
-    "dev": "vite",
+    "dev": "concurrently -k \"vite\" \"wait-on tcp:5173 && electron .\"",
     "build": "vite build",
-    "preview": "vite preview"
+    "build:win": "npm run build && electron-builder --win nsis",
+    "preview": "vite preview",
+    "typecheck": "tsc --noEmit"
+  },
+  "build": {
+    "appId": "com.fwebstudio.desktop",
+    "productName": "F-Web Studio",
+    "directories": {
+      "output": "release"
+    },
+    "files": [
+      "dist/**/*",
+      "electron/**/*",
+      "src/**/*",
+      "package.json"
+    ],
+    "win": {
+      "target": "nsis",
+      "artifactName": "F-Web-Studio-${version}-Setup.${ext}"
+    }
   },
   "dependencies": {
-    "react": "^19.2.4",
-    "@google/genai": "^1.38.0",
-    "react-dom": "^19.2.4",
-    "framer-motion": "^11.13.1"
+    "better-sqlite3": "^11.8.1",
+    "fabric": "^6.6.1",
+    "qrcode": "^1.5.4",
+    "pdf-lib": "^1.17.1",
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0",
+    "lucide-react": "^0.511.0"
   },
   "devDependencies": {
     "@types/node": "^22.14.0",
+    "@types/react": "^19.0.12",
+    "@types/react-dom": "^19.0.4",
     "@vitejs/plugin-react": "^5.0.0",
+    "autoprefixer": "^10.4.20",
+    "concurrently": "^9.1.2",
+    "electron": "^35.2.0",
+    "electron-builder": "^25.1.8",
+    "postcss": "^8.5.3",
+    "tailwindcss": "^3.4.17",
     "typescript": "~5.8.2",
-    "vite": "^6.2.0"
+    "vite": "^6.2.0",
+    "wait-on": "^8.0.3"
   }
 }
